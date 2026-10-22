@@ -1,0 +1,80 @@
+[
+  {
+    "file": "cifake_real_test_real_015305.jpg",
+    "name": "test_real_015305",
+    "label": "real",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_real_test_real_012471.jpg",
+    "name": "test_real_012471",
+    "label": "real",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_real_test_real_016468.jpg",
+    "name": "test_real_016468",
+    "label": "real",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_real_test_real_010791.jpg",
+    "name": "test_real_010791",
+    "label": "real",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_fake_test_fake_001186.jpg",
+    "name": "test_fake_001186",
+    "label": "AI",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_fake_test_fake_008779.jpg",
+    "name": "test_fake_008779",
+    "label": "AI",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_fake_test_fake_001542.jpg",
+    "name": "test_fake_001542",
+    "label": "AI",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "cifake_fake_test_fake_005991.jpg",
+    "name": "test_fake_005991",
+    "label": "AI",
+    "source": "CIFAKE test (SD 1.4)"
+  },
+  {
+    "file": "modern_FLUX2_0197.png",
+    "name": "FLUX.2 0197",
+    "label": "AI",
+    "source": "modern set \u2014 FLUX.2"
+  },
+  {
+    "file": "modern_GPT_Image_2_0060.png",
+    "name": "GPT Image 2 0060",
+    "label": "AI",
+    "source": "modern set \u2014 GPT Image 2"
+  },
+  {
+    "file": "modern_Nano_Banana_2_0120.png",
+    "name": "Nano Banana 2 0120",
+    "label": "AI",
+    "source": "modern set \u2014 Nano Banana 2"
+  },
+  {
+    "file": "modern_Qwen_Image_21_0020.png",
+    "name": "Qwen Image 2.1 0020",
+    "label": "AI",
+    "source": "modern set \u2014 Qwen Image 2.1"
+  },
+  {
+    "file": "modern_Real_0039.png",
+    "name": "Real 0039",
+    "label": "real",
+    "source": "modern set \u2014 Real"
+  }
+]

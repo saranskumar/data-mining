@@ -1,0 +1,1 @@
+K-Means sweep k=2–12. Best k=2 by silhouette (0.1055). Purity vs real/fake: 0.6399, ARI: 0.0782, NMI: 0.0576. Clusters weakly track real/fake.

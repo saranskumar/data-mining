@@ -1,0 +1,25 @@
+model,source,generator,n,rate,metric
+logreg,julienlucas_nbpro,mj_dalle_sd_nbpro_mix,2000,0.6345,specificity
+logreg,mllm_gptimage2_nb2,FLUX.2,600,0.23166666666666666,detection_rate
+logreg,mllm_gptimage2_nb2,GPT Image 2,599,0.20534223706176963,detection_rate
+logreg,mllm_gptimage2_nb2,Nano Banana 2,600,0.2916666666666667,detection_rate
+logreg,mllm_gptimage2_nb2,Qwen Image 2.1,600,0.235,detection_rate
+logreg,mllm_gptimage2_nb2,Real,600,0.73,specificity
+dt_gini,julienlucas_nbpro,mj_dalle_sd_nbpro_mix,2000,0.6395,specificity
+dt_gini,mllm_gptimage2_nb2,FLUX.2,600,0.295,detection_rate
+dt_gini,mllm_gptimage2_nb2,GPT Image 2,599,0.3806343906510851,detection_rate
+dt_gini,mllm_gptimage2_nb2,Nano Banana 2,600,0.39,detection_rate
+dt_gini,mllm_gptimage2_nb2,Qwen Image 2.1,600,0.26166666666666666,detection_rate
+dt_gini,mllm_gptimage2_nb2,Real,600,0.6166666666666667,specificity
+dt_entropy,julienlucas_nbpro,mj_dalle_sd_nbpro_mix,2000,0.5575,specificity
+dt_entropy,mllm_gptimage2_nb2,FLUX.2,600,0.345,detection_rate
+dt_entropy,mllm_gptimage2_nb2,GPT Image 2,599,0.5225375626043406,detection_rate
+dt_entropy,mllm_gptimage2_nb2,Nano Banana 2,600,0.5566666666666666,detection_rate
+dt_entropy,mllm_gptimage2_nb2,Qwen Image 2.1,600,0.29333333333333333,detection_rate
+dt_entropy,mllm_gptimage2_nb2,Real,600,0.49833333333333335,specificity
+mlp,julienlucas_nbpro,mj_dalle_sd_nbpro_mix,2000,0.6895,specificity
+mlp,mllm_gptimage2_nb2,FLUX.2,600,0.24833333333333332,detection_rate
+mlp,mllm_gptimage2_nb2,GPT Image 2,599,0.20534223706176963,detection_rate
+mlp,mllm_gptimage2_nb2,Nano Banana 2,600,0.26666666666666666,detection_rate
+mlp,mllm_gptimage2_nb2,Qwen Image 2.1,600,0.23833333333333334,detection_rate
+mlp,mllm_gptimage2_nb2,Real,600,0.77,specificity

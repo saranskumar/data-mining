@@ -1,0 +1,46 @@
+# Data — never commit large files
+code/data/
+code/outputs/features/
+code/outputs/models/
+code/outputs/figures/
+code/outputs/logs/
+# Exception: commit tables (small CSVs, narrative files)
+!code/outputs/tables/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+kaggle.json
+
+# Jupyter (if any)
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/
+
+# Datasets (large) — keep only the download script + notes
+dataset/*
+!dataset/download_datasets.py
+!dataset/DATASETS.md
+
+# Derived OOD arrays (rebuild with code/data_ood/build_modern.py)
+code/data_ood/out/

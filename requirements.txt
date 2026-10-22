@@ -1,0 +1,30 @@
+# numpy, scipy, image
+numpy>=1.24
+scipy>=1.10
+Pillow>=10.0
+opencv-python>=4.8
+
+# ML
+scikit-learn>=1.3
+scikit-image>=0.21
+joblib>=1.3
+
+# Plotting
+matplotlib>=3.7
+seaborn>=0.12
+
+# Misc
+pyyaml>=6.0
+tqdm>=4.65
+statsmodels>=0.14
+
+# Demo
+streamlit>=1.32
+
+# Testing
+pytest>=7.4
+
+# PyTorch — install manually with CUDA for RTX 2050 (see README)
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# CPU-only fallback:
+# pip install torch torchvision

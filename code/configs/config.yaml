@@ -1,0 +1,92 @@
+# HybridMarker — central configuration
+# Edit paths/hyperparameters here; never hardcode in scripts.
+
+seed: 42
+
+# ── Paths ──────────────────────────────────────────────────────────────────────
+paths:
+  data_root:      "../dataset/cifake"
+  train_real:     "../dataset/cifake/train/REAL"
+  train_fake:     "../dataset/cifake/train/FAKE"
+  test_real:      "../dataset/cifake/test/REAL"
+  test_fake:      "../dataset/cifake/test/FAKE"
+  outputs:        "outputs"
+  features:       "outputs/features"
+  models:         "outputs/models"
+  figures:        "outputs/figures"
+  tables:         "outputs/tables"
+  logs:           "outputs/logs"
+
+# ── Preprocessing ──────────────────────────────────────────────────────────────
+preprocessing:
+  image_size: [32, 32]
+  val_split: 0.10          # fraction of train for validation
+  subset: null             # set to int (e.g. 5000) for fast dev runs
+
+# ── Feature extraction ─────────────────────────────────────────────────────────
+features:
+  noise:
+    gaussian_sigma: 1.0
+    median_ksize: 3
+  fft:
+    radial_bins: 8
+  color:
+    hist_bins: 16          # 16 gives 48 RGB + 48 HSV bins; drop to 8 to shrink D
+  glcm:
+    levels: 64
+    distances: [1, 2]
+    angles: [0, 0.7854, 1.5708, 2.3562]  # 0, 45, 90, 135 degrees in radians
+
+# ── PCA ────────────────────────────────────────────────────────────────────────
+pca:
+  variance_retained: 0.95
+  svd_solver: "full"
+
+# ── Classification ─────────────────────────────────────────────────────────────
+classification:
+  dt_param_grid:
+    max_depth: [5, 10, 15, 20, null]
+    min_samples_leaf: [1, 5, 10]
+    ccp_alpha: [0.0, 0.0001, 0.001]
+  mlp_param_grid:
+    hidden_layer_sizes: [[64], [128, 64], [256, 128, 64]]
+    alpha: [0.0001, 0.001, 0.01]
+  mlp_max_iter: 500
+  cv_folds: 5
+
+# ── Clustering ─────────────────────────────────────────────────────────────────
+clustering:
+  k_min: 2
+  k_max: 12
+  n_init: 10
+
+# ── Watermark ──────────────────────────────────────────────────────────────────
+watermark:
+  message_bits: 48           # fallback ladder: 48 -> 32 -> 24 -> 16
+  strength_alpha: 1.0        # encoder residual scale
+  lambda_img: 1.0            # image-fidelity loss weight
+  lambda_msg: 1.0            # message-recovery loss weight
+  batch_size: 128
+  epochs: 30
+  lr: 0.001
+  curriculum_warmup_epochs: 5   # epochs of identity-noise only
+  checkpoint_every: 1
+  noise_probs:
+    identity: 0.3
+    gaussian: 0.15
+    blur: 0.15
+    resize: 0.15
+    crop: 0.125
+    jpeg_approx: 0.125
+
+# ── Attacks (real, eval-time) ──────────────────────────────────────────────────
+attacks:
+  jpeg_qualities: [90, 70, 50]
+  resize_factor: 0.5
+  crop_fraction: 0.80
+  gaussian_sigma: 0.1
+  blur_radius: 1
+
+# ── Detection threshold ────────────────────────────────────────────────────────
+detection:
+  false_positive_rate_target: 0.001

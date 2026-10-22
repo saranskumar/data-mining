@@ -1,0 +1,22 @@
+{
+  "fft_radial_bin7": 0.42379999657519013,
+  "noise_autocorr_vert": 0.10130420380322466,
+  "noise_gauss_B_kurt": 0.07822113960705011,
+  "rgb_R_mean": 0.07289815309999813,
+  "glcm_d2_dissimilarity_std": 0.02700077510331167,
+  "dct_high_ratio": 0.02676546545964757,
+  "dct_highband_var": 0.02570022153971232,
+  "hsv_hist_S_b15": 0.024362966167268484,
+  "noise_gauss_G_kurt": 0.02350654620955314,
+  "glcm_d2_homogeneity_std": 0.02282819801139882,
+  "hsv_hist_S_b2": 0.01375330639884305,
+  "glcm_d1_homogeneity_std": 0.01360085599590329,
+  "hsv_hist_H_b14": 0.010999746081471296,
+  "rgb_hist_G_b0": 0.00999327750356577,
+  "fft_peak_to_mean": 0.009680902436823359,
+  "rgb_hist_R_b0": 0.009017390544990473,
+  "rgb_hist_B_b0": 0.006128722692544763,
+  "dct_mean_dc": 0.005789368394644969,
+  "hsv_hist_H_b7": 0.005226202866877865,
+  "rgb_corr_GB": 0.004625247239602298
+}

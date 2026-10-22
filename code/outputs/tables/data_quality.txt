@@ -1,0 +1,5 @@
+Train size: 100000
+Test size:  20000
+Intra-train duplicate groups: 920
+Intra-test  duplicate groups: 38
+Train-test overlap hashes:   378
