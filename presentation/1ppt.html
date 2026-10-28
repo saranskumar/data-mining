@@ -601,7 +601,7 @@
           <ul>
             <li>Exploration only</li>
             <li>Not the main classifier</li>
-            <li>Do generators form clusters?</li>
+            <li>Do clusters track real/fake? (weakly: ARI 0.08)</li>
           </ul>
           <div class="viz" style="margin-top: 0.6rem;">
             <svg viewBox="0 0 200 120" fill="none" aria-label="K-means clusters">
@@ -692,61 +692,123 @@
       <h2>How do we know it works?</h2>
       <div class="cols-3">
         <div>
-          <h3>Classification plan</h3>
+          <h3>Classification (CIFAKE test, n = 19,622)</h3>
           <ul>
-            <li>Accuracy</li>
-            <li>Precision</li>
-            <li>Recall</li>
-            <li>F1-score</li>
-            <li>Confusion matrix</li>
+            <li>MLP (128, 64): <b>93.5 %</b> acc · F1 0.933 · AUC 0.983</li>
+            <li>Logistic regression: 89.8 %</li>
+            <li>Decision tree, Gini: 85.1 % · entropy (IG): 84.7 %</li>
+            <li>McNemar MLP vs DT: p &lt; 0.001</li>
           </ul>
           <div class="viz" style="margin-top: 0.6rem;">
-            <svg viewBox="0 0 180 140" fill="none" aria-label="Confusion matrix template">
-              <text x="108" y="14" text-anchor="middle" font-size="9" fill="#737373" font-family="Geist Mono, monospace">predicted</text>
+            <svg viewBox="0 0 180 140" fill="none" aria-label="MLP confusion matrix">
+              <text x="108" y="14" text-anchor="middle" font-size="9" fill="#737373" font-family="Geist Mono, monospace">predicted (MLP)</text>
               <text x="72" y="36" text-anchor="middle" font-size="8" fill="#737373" font-family="Geist Mono, monospace">REAL</text>
               <text x="132" y="36" text-anchor="middle" font-size="8" fill="#737373" font-family="Geist Mono, monospace">FAKE</text>
               <text x="18" y="72" font-size="8" fill="#737373" font-family="Geist Mono, monospace">REAL</text>
               <text x="18" y="112" font-size="8" fill="#737373" font-family="Geist Mono, monospace">FAKE</text>
               <rect x="48" y="48" width="48" height="36" fill="#0a0a0a"/>
-              <text x="72" y="70" text-anchor="middle" font-size="9" fill="#fff" font-family="Geist Mono, monospace">TN</text>
+              <text x="72" y="70" text-anchor="middle" font-size="9" fill="#fff" font-family="Geist Mono, monospace">9329</text>
               <rect x="108" y="48" width="48" height="36" stroke="#0a0a0a"/>
-              <text x="132" y="70" text-anchor="middle" font-size="9" fill="#0a0a0a" font-family="Geist Mono, monospace">FP</text>
+              <text x="132" y="70" text-anchor="middle" font-size="9" fill="#0a0a0a" font-family="Geist Mono, monospace">671</text>
               <rect x="48" y="92" width="48" height="36" stroke="#0a0a0a"/>
-              <text x="72" y="114" text-anchor="middle" font-size="9" fill="#0a0a0a" font-family="Geist Mono, monospace">FN</text>
+              <text x="72" y="114" text-anchor="middle" font-size="9" fill="#0a0a0a" font-family="Geist Mono, monospace">614</text>
               <rect x="108" y="92" width="48" height="36" fill="#0a0a0a"/>
-              <text x="132" y="114" text-anchor="middle" font-size="9" fill="#fff" font-family="Geist Mono, monospace">TP</text>
+              <text x="132" y="114" text-anchor="middle" font-size="9" fill="#fff" font-family="Geist Mono, monospace">9008</text>
             </svg>
-            <ul><li>Template only</li><li>No scores yet</li></ul>
+            <ul><li>Top feature: FFT radial band 7 (high frequency)</li></ul>
           </div>
         </div>
         <div>
           <h3>Clustering + watermark</h3>
           <ul>
-            <li>PCA plot + K-Means</li>
-            <li>Inspect feature-space groups</li>
-            <li>Message recovery rate</li>
-            <li>Robustness after JPEG / crop / resize</li>
+            <li>K-Means best k = 2 (silhouette 0.11)</li>
+            <li>Purity 0.65 · ARI 0.08 → clusters barely track real/fake</li>
+            <li>Watermark: <!--WM_SUMMARY-->16 bits, 100 % read back on full-size photos (43 dB)<!--/WM_SUMMARY--></li>
           </ul>
           <div class="viz" style="margin-top: 0.6rem;">
-            <svg viewBox="0 0 180 140" fill="none" aria-label="Metrics to fill later">
-              <text x="16" y="28" font-size="10" fill="#737373" font-family="Geist Mono, monospace">accuracy     ___</text>
-              <text x="16" y="50" font-size="10" fill="#737373" font-family="Geist Mono, monospace">precision    ___</text>
-              <text x="16" y="72" font-size="10" fill="#737373" font-family="Geist Mono, monospace">recall       ___</text>
-              <text x="16" y="94" font-size="10" fill="#737373" font-family="Geist Mono, monospace">F1           ___</text>
-              <text x="16" y="116" font-size="10" fill="#737373" font-family="Geist Mono, monospace">bit recovery ___</text>
+            <svg viewBox="0 0 180 140" fill="none" aria-label="Key metrics">
+              <text x="16" y="28" font-size="10" fill="#0a0a0a" font-family="Geist Mono, monospace">accuracy     93.5 %</text>
+              <text x="16" y="50" font-size="10" fill="#0a0a0a" font-family="Geist Mono, monospace">precision    0.931</text>
+              <text x="16" y="72" font-size="10" fill="#0a0a0a" font-family="Geist Mono, monospace">recall       0.936</text>
+              <text x="16" y="94" font-size="10" fill="#0a0a0a" font-family="Geist Mono, monospace">F1           0.933</text>
+              <text x="16" y="116" font-size="10" fill="#0a0a0a" font-family="Geist Mono, monospace">bit recovery <!--WM_BITS-->100 %<!--/WM_BITS--></text>
             </svg>
-            <ul><li>Fill after implementation</li></ul>
+            <ul><li>All numbers produced by the pipeline scripts</li></ul>
           </div>
         </div>
         <div>
           <h3>Limitations</h3>
           <ul>
             <li>CIFAKE is only 32×32</li>
-            <li>May fail on unseen generators</li>
+            <li>Fails on modern generators (~50 %)</li>
             <li>Transforms can damage watermarks</li>
             <li>Detection ≠ exact source</li>
             <li>Academic prototype</li>
           </ul>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- results: modern generators -->
+    <section class="slide">
+      <div class="label">08b / Results on modern generators</div>
+      <h2>Trained on SD 1.4 fakes, tested on current generators</h2>
+      <div class="cols-2">
+        <div>
+          <h3>Out-of-distribution test (4,999 images, 32×32)</h3>
+          <ul>
+            <li>Fakes: GPT Image 2, Nano Banana 2, FLUX.2, Qwen Image 2.1, MJ / DALL-E / SD / Nano Banana Pro mix</li>
+            <li>Same features, scaler, PCA and models — nothing retrained</li>
+            <li>Balanced accuracy: <b>≈ 0.50 for every model</b> (chance)</li>
+            <li>MLP calls ~77 % of everything "real" → detects only ~22 % of modern fakes</li>
+          </ul>
+          <h3 style="margin-top:0.8rem;">What it means</h3>
+          <ul>
+            <li>Classical features learned SD 1.4 / CIFAR-specific traces, not "AI-ness"</li>
+            <li>Detection must be retrained per generator generation</li>
+            <li>Motivates the provenance layer: a watermark does not age</li>
+          </ul>
+        </div>
+        <div class="viz">
+          <svg viewBox="0 0 270 160" fill="none" aria-label="Detection rate of fakes by generator (MLP)">
+            <text x="0" y="10" font-size="9" fill="#737373" font-family="Geist Mono, monospace">fakes detected by MLP (recall)</text>
+            <text x="0" y="31" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">CIFAKE (SD 1.4)</text><rect x="96" y="22" width="140" height="12" fill="#0a0a0a"/><text x="240" y="31" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">94%</text><text x="0" y="53" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">FLUX.2</text><rect x="96" y="44" width="33" height="12" fill="#737373"/><text x="133" y="53" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">22%</text><text x="0" y="75" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">GPT Image 2</text><rect x="96" y="66" width="34" height="12" fill="#737373"/><text x="134" y="75" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">22%</text><text x="0" y="97" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">Nano Banana 2</text><rect x="96" y="88" width="32" height="12" fill="#737373"/><text x="132" y="97" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">21%</text><text x="0" y="119" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">Qwen Image 2.1</text><rect x="96" y="110" width="34" height="12" fill="#737373"/><text x="134" y="119" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">23%</text><text x="0" y="141" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">MJ/DALL-E/SD/NB Pro</text><rect x="96" y="132" width="42" height="12" fill="#737373"/><text x="142" y="141" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">28%</text>
+          </svg>
+          <ul><li>Source: outputs/tables/ood_by_generator.csv</li></ul>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- results: watermark -->
+    <section class="slide">
+      <div class="label">08c / Watermark results</div>
+      <h2>Invisible at full size, readable after JPEG</h2>
+      <div class="cols-2">
+        <div>
+          <h3>How it is applied to a real photo</h3>
+          <ul>
+            <li>Encoder/decoder trained on 90 k CIFAKE images (32×32), 16-bit message</li>
+            <li>Residual computed at 32×32 → upsampled → added to the <b>original-size</b> photo</li>
+            <li>Bounded change (tanh, α = 0.03), zero-mean → no colour tint</li>
+            <li>Perceptual masking: less change in flat areas (sky, paper)</li>
+            <li>Embed-and-verify: strength raised only if the message would not read back</li>
+          </ul>
+          <h3 style="margin-top:0.8rem;">150 real photos, strength 0.75</h3>
+          <ul>
+            <li>PSNR <b>43.2 dB</b> · SSIM <b>0.998</b> (not visible)</li>
+            <li>False positives on unmarked photos: <b>0 / 150</b> (threshold 15/16 bits, p ≈ 2.6·10⁻⁴)</li>
+            <li>Watermarking changed only 3.4 % of forensic verdicts</li>
+            <li>Limit: cropping breaks it (spatial pattern shifts)</li>
+          </ul>
+        </div>
+        <div class="viz">
+          <svg viewBox="0 0 270 160" fill="none" aria-label="Watermark detection rate after attacks">
+            <text x="0" y="10" font-size="9" fill="#737373" font-family="Geist Mono, monospace">marks detected after attack</text>
+            <text x="0" y="31" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">clean</text><rect x="70" y="22" width="150" height="12" fill="#0a0a0a"/><text x="224" y="31" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">100%</text><text x="0" y="53" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">JPEG 90</text><rect x="70" y="44" width="150" height="12" fill="#0a0a0a"/><text x="224" y="53" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">100%</text><text x="0" y="75" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">JPEG 70</text><rect x="70" y="66" width="149" height="12" fill="#0a0a0a"/><text x="223" y="75" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">99%</text><text x="0" y="97" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">JPEG 50</text><rect x="70" y="88" width="149" height="12" fill="#0a0a0a"/><text x="223" y="97" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">99%</text><text x="0" y="119" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">resize ½</text><rect x="70" y="110" width="150" height="12" fill="#0a0a0a"/><text x="224" y="119" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">100%</text><text x="0" y="141" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">crop 80 %</text><rect x="70" y="132" width="1" height="12" fill="#737373"/><text x="75" y="141" font-size="8" fill="#0a0a0a" font-family="Geist Mono, monospace">0%</text>
+          </svg>
+          <ul><li>Source: outputs/tables/watermark_fullres.csv (mode = verified)</li></ul>
         </div>
       </div>
     </section>

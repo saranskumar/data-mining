@@ -35,7 +35,7 @@ def load_config(path: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description="HybridMarker — Watermark Evaluation")
     parser.add_argument("--config", default="configs/config.yaml")
-    parser.add_argument("--subset", type=int, default=500)
+    parser.add_argument("--subset", type=int, default=2000)
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -76,7 +76,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     alpha = wm_info.get("strength_alpha", wm_cfg.get("strength_alpha", 1.0))  # what the encoder was trained with
 
-    enc = EncoderCNN(message_bits=L, strength_alpha=alpha).to(device)
+    enc = EncoderCNN(message_bits=L, strength_alpha=alpha, lum_only=wm_info.get("lum_only", False)).to(device)
     dec = DecoderCNN(message_bits=L).to(device)
     enc.load_state_dict(torch.load(out_models / "wm_enc.pt", map_location=device))
     dec.load_state_dict(torch.load(out_models / "wm_dec.pt", map_location=device))

@@ -62,12 +62,13 @@ clustering:
 
 # ── Watermark ──────────────────────────────────────────────────────────────────
 watermark:
-  message_bits: 48           # fallback ladder: 48 -> 32 -> 24 -> 16
-  strength_alpha: 1.0        # encoder residual scale
+  message_bits: 16           # ladder 48->32->24->16; 16 chosen (sweep 2026-10-27, decisions.md)
+  strength_alpha: 0.03       # max per-pixel change (tanh-bounded) -> PSNR >= ~30 dB
+  lum_only: false            # true = brightness-only residual (no colour patterns)
   lambda_img: 1.0            # image-fidelity loss weight
   lambda_msg: 1.0            # message-recovery loss weight
   batch_size: 128
-  epochs: 30
+  epochs: 20
   lr: 0.001
   curriculum_warmup_epochs: 5   # epochs of identity-noise only
   checkpoint_every: 1

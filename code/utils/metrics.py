@@ -84,12 +84,12 @@ def ssim(img1: np.ndarray, img2: np.ndarray) -> float:
 
 def binomial_threshold(n_bits: int, fpr_target: float = 1e-3) -> float:
     """
-    Minimum bit-accuracy threshold t such that P(bit_acc >= t | random) <= fpr_target.
-    Uses normal approximation to Binomial(n_bits, 0.5).
-    Returns threshold in [0, 1].
+    Minimum bit-accuracy threshold t = k/n_bits such that
+    P(bit_acc >= t | unmarked image, bits ~ Bernoulli(0.5)) <= fpr_target.
+    Exact Binomial(n_bits, 0.5) tail (the normal approximation is loose for small n_bits).
     """
-    from scipy.stats import norm
-    z = norm.ppf(1 - fpr_target)
-    # bit_acc ~ N(0.5, sqrt(0.25/n_bits))
-    threshold = 0.5 + z * np.sqrt(0.25 / n_bits)
-    return float(np.clip(threshold, 0, 1))
+    from scipy.stats import binom
+    for k in range(n_bits + 1):
+        if binom.sf(k - 1, n_bits, 0.5) <= fpr_target:   # P(X >= k)
+            return k / n_bits
+    return 1.0

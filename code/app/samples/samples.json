@@ -76,5 +76,17 @@
     "name": "Real 0039",
     "label": "real",
     "source": "modern set \u2014 Real"
+  },
+  {
+    "file": "watermarked_png.png",
+    "name": "\u201cHybridMarker\u201d (PNG)",
+    "label": "watermarked",
+    "source": "Watermark tab output"
+  },
+  {
+    "file": "watermarked_jpeg75.jpg",
+    "name": "\u201cHybridMarker\u201d (re-saved JPEG 75)",
+    "label": "watermarked",
+    "source": "Watermark tab output, re-compressed"
   }
 ]

@@ -49,6 +49,7 @@ def main() -> None:
     parser.add_argument("--alpha", type=float, default=None, help="override watermark.strength_alpha")
     parser.add_argument("--lam-img", type=float, default=None, help="override watermark.lambda_img")
     parser.add_argument("--epochs", type=int, default=None, help="override watermark.epochs")
+    parser.add_argument("--lum-only", type=int, default=None, help="1 = brightness-only residual")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -89,6 +90,7 @@ def main() -> None:
     warmup  = wm_cfg.get("curriculum_warmup_epochs", 5)
     ckpt_every = wm_cfg.get("checkpoint_every", 1)
     noise_probs = wm_cfg.get("noise_probs", None)
+    lum_only = bool(args.lum_only) if args.lum_only is not None else bool(wm_cfg.get("lum_only", False))
     log.info("Config: bits=%d  alpha=%.2f  lam_img=%.2f  lam_msg=%.2f  bs=%d  epochs=%d",
              L, alpha, lam_img, lam_msg, bs, epochs)
 
@@ -106,7 +108,7 @@ def main() -> None:
 
     # ── Model ─────────────────────────────────────────────────────────────────
     model = HybridMarkerWM(message_bits=L, alpha=alpha,
-                           noise_probs=noise_probs).to(device)
+                           noise_probs=noise_probs, lum_only=lum_only).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr_val)
     scaler_amp = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
 
@@ -129,7 +131,7 @@ def main() -> None:
 
     # ── Training loop ──────────────────────────────────────────────────────────
     train_losses, val_bit_accs, val_psnrs = [], [], []
-    best_val_ba = 0.0
+    best_val_ba, best_val_psnr = 0.0, 0.0
     best_epoch = 0
 
     for epoch in range(epochs):
@@ -190,8 +192,9 @@ def main() -> None:
             torch.save(model.encoder.state_dict(), out_models / f"wm_enc_last{sfx}.pt")
             torch.save(model.decoder.state_dict(), out_models / f"wm_dec_last{sfx}.pt")
 
-        if val_ba > best_val_ba:
-            best_val_ba = val_ba
+        # rank by bit accuracy (to 3 decimals), ties broken by higher PSNR (less visible)
+        if (round(val_ba, 3), val_psnr) > (round(best_val_ba, 3), best_val_psnr):
+            best_val_ba, best_val_psnr = val_ba, val_psnr
             best_epoch = epoch
             torch.save(model.encoder.state_dict(), out_models / f"wm_enc{sfx}.pt")
             torch.save(model.decoder.state_dict(), out_models / f"wm_dec{sfx}.pt")
@@ -211,6 +214,7 @@ def main() -> None:
         "best_val_bit_acc": best_val_ba,
         "best_val_psnr": val_psnrs[best_epoch] if val_psnrs else None,
         "strength_alpha": alpha,
+        "lum_only": lum_only,
         "lambda_img": lam_img,
         "train_images": int(len(X_tr)),
         "final_val_psnr": val_psnrs[-1] if val_psnrs else None,

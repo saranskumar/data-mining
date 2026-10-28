@@ -1,0 +1,5 @@
+{
+  "threshold": 0.9375,
+  "fpr_target": 0.001,
+  "empirical_fpr": 0.0
+}

@@ -18,6 +18,49 @@ Dataset: [CIFAKE](https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-ge
 
 ---
 
+## Quick start — how to run
+
+Windows, Python 3.12. Run these in PowerShell from the repository root.
+
+**1. Set up (once)**
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121   # GPU; omit --index-url for CPU-only
+python dataset\download_datasets.py        # CIFAKE + modern sets, ~6 GB
+```
+
+**2. Build the models (once)** — trained models are not stored in git, so a fresh clone must create them.
+```powershell
+cd code
+python run_all.py --workers 4               # preprocess, features, PCA, classifiers, K-Means, watermark train + eval (long; GPU for the watermark)
+python data_ood\build_modern.py --per-source 1000
+python 09_ood_eval.py                       # modern-generator test
+```
+For a much faster check instead (small subset, no watermark): `python run_all.py --subset 5000 --workers 4 --skip-watermark`.
+The demo's Watermark and Decode tabs need the watermark model, so run `python 06_watermark_train.py` (GPU) if you used `--skip-watermark`.
+
+**3. Start the demo**
+```powershell
+python app\make_samples.py                  # once: sample gallery (needs the trained watermark model)
+python -m streamlit run app\demo.py
+```
+Open http://localhost:8501. Try it in this order:
+1. **Detect**: pick a gallery sample (or upload an image) to get real/AI probabilities from all four models.
+2. **Watermark**: upload a photo, type a message, download the PNG. It keeps its original size.
+3. **Decode**: upload that PNG (JPEG re-saves and resizes also work). It names your message, or says none was found.
+4. **Train**: run the whole pipeline or any single stage from the browser, with options, a live log and Stop.
+   A job keeps running if you refresh the page. One job runs at a time.
+5. **Results**: all tables and figures.
+6. **Logs**: step-by-step log of every run (also shown as a "Process log" inside each tab).
+
+**4. Present**: open `presentation/1ppt.html` in a browser (← / → to move).
+
+If anything hangs or fails, see [Troubleshooting](#troubleshooting).
+
+---
+
 ## Repository layout
 
 ```
@@ -31,8 +74,11 @@ Data mining/
 │   ├── 06_watermark_train.py     # Phase 6 — Encoder/Decoder CNN training (GPU)
 │   ├── 07_watermark_eval.py      # Phase 7 — robustness under JPEG/resize/crop/noise
 │   ├── 08_hybrid_eval.py         # Phase 8 — hybrid fusion on 4 groups × attacks
+│   ├── 09_ood_eval.py            # CIFAKE-trained models vs modern generators
+│   ├── data_ood/build_modern.py  # builds the 32×32 modern-generator test set
 │   ├── run_all.py                # Orchestrator — runs all stages in order
-│   ├── app/demo.py               # Streamlit demo (3 tabs: Detect, Watermark, Hybrid)
+│   ├── app/demo.py               # Streamlit demo (Detect / Watermark / Hybrid / Results)
+│   ├── app/make_samples.py       # builds the offline sample gallery (app/samples/)
 │   ├── configs/config.yaml       # Single source of truth for all hyperparameters
 │   ├── utils/
 │   │   ├── image_utils.py        # I/O, normalisation, seeding, logging
@@ -42,14 +88,15 @@ Data mining/
 │   │   ├── attacks.py            # Real image attacks (JPEG, resize, crop, noise, blur)
 │   │   └── wm_model.py           # EncoderCNN, DecoderCNN, NoiseLayer (PyTorch)
 │   ├── tests/test_features.py    # pytest smoke tests
-│   └── data/cifake/              # ← YOU must download this (gitignored)
-│       ├── train/{REAL,FAKE}/
-│       └── test/{REAL,FAKE}/
-├── outputs/
+│   └── outputs/
 │   ├── features/                 # .npy arrays (gitignored)
 │   ├── models/                   # .joblib + .pt checkpoints (gitignored)
 │   ├── figures/                  # all plots (gitignored)
 │   └── tables/                   # CSVs + text files (committed)
+├── dataset/                      # gitignored data; download_datasets.py + DATASETS.md committed
+│   ├── cifake/{train,test}/{REAL,FAKE}/
+│   └── modern/                   # GPT Image 2, Nano Banana 2, FLUX.2, Qwen Image 2.1, NB Pro mix
+├── presentation/1ppt.html        # slide deck (open in a browser, arrow keys)
 ├── docs/                         # Architecture, phases, feature spec, checklist
 ├── requirements.txt
 └── .gitignore
@@ -84,21 +131,14 @@ python -c "import torch; print(torch.cuda.is_available())"
 # → True
 ```
 
-### 4. Download CIFAKE dataset
+### 4. Download the datasets (no Kaggle account needed)
 
-1. Go to: https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images
-2. Download and extract into:
-   ```
-   code/data/cifake/train/REAL/   ← 50 000 images
-   code/data/cifake/train/FAKE/   ← 50 000 images
-   code/data/cifake/test/REAL/    ← 10 000 images
-   code/data/cifake/test/FAKE/    ← 10 000 images
-   ```
-3. Verify count:
-   ```powershell
-   (Get-ChildItem "code\data\cifake" -Recurse -File).Count
-   # → 120 000
-   ```
+```powershell
+python dataset\download_datasets.py            # CIFAKE + modern sets, ~6 GB
+```
+This writes `dataset/cifake/{train,test}/{REAL,FAKE}` (120 000 images, from a Hugging Face mirror of
+the Kaggle set) and `dataset/modern/` (a sampled subset of two modern-generator datasets). Sources,
+licences and label conventions are in `dataset/DATASETS.md`. A free `HF_TOKEN` makes downloads faster.
 
 ---
 
@@ -110,7 +150,7 @@ All scripts are run from the `code/` directory:
 cd "d:\WORK\College\Data mining\code"
 ```
 
-### Development run (fast, 5 000-image subset)
+### Development run (fast, 5 000 images per class)
 
 ```powershell
 python run_all.py --subset 5000 --workers 4 --skip-watermark
@@ -122,7 +162,7 @@ python run_all.py --subset 5000 --workers 4 --skip-watermark
 python 01_preprocess.py
 python 02_feature_extraction.py --workers 4
 python 03_pca_reduce.py
-python 04_classify.py
+python 04_classify.py          # add --resume to reuse saved decision trees
 python 05_cluster.py
 ```
 
@@ -140,6 +180,13 @@ python 08_hybrid_eval.py
 python run_all.py --workers 4
 ```
 
+### Modern-generator test (out-of-distribution)
+
+```powershell
+python data_ood\build_modern.py --per-source 1000   # 32x32 arrays from dataset/modern
+python 09_ood_eval.py                               # per-generator detection rates
+```
+
 ### Run tests
 
 ```powershell
@@ -147,11 +194,44 @@ cd "d:\WORK\College\Data mining\code"
 pytest tests/ -v
 ```
 
-### Launch Streamlit demo
+### Launch the demo
 
 ```powershell
-streamlit run "d:\WORK\College\Data mining\code\app\demo.py"
+python app\make_samples.py        # once: sample gallery for offline demos
+python -m streamlit run app\demo.py
 ```
+Tabs: **Detect** (single image, sample gallery or batch with CSV export), **Watermark** (embed a
+message into a photo at its original size, download it, test attacks), **Decode** (upload any image —
+re-saved JPEG or resized is fine — and it names the embedded message, or says none was found),
+**Train** (run any pipeline stage from the browser with a live log), **Results** (all tables + figures), **Logs** (every run of this session). Each tab also shows a
+"Process log" with the steps, timings and details of what it just did; it is also written to
+`code/outputs/logs/demo_activity.log`. The gallery includes two pre-watermarked samples for offline demos.
+
+### Present
+
+Open `presentation/1ppt.html` in a browser (← / → to move, Print button for PDF).
+
+### Troubleshooting
+
+- *Every Python script hangs at start-up on Windows*: Python 3.12's `platform` module queries WMI,
+  which numpy/scipy/torch trigger on import. If the WMI service is hung, restart the PC
+  (or `Restart-Service winmgmt -Force` as Administrator).
+- *OpenBLAS memory allocation failed*: close other heavy apps; the pipeline keeps images as uint8
+  (~370 MB for all 120 k) and converts per batch.
+
+---
+
+## Results (full data, produced by the scripts)
+
+| Layer | Result |
+|---|---|
+| Forensic — MLP (128, 64) on CIFAKE test (19,622 imgs) | **93.5 % acc**, F1 0.933, ROC-AUC 0.983 |
+| Forensic — logistic regression / DT-Gini / DT-entropy | 89.8 % / 85.1 % / 84.7 % |
+| K-Means (k = 2 best silhouette) | purity 0.65, ARI 0.08 — clusters barely track real/fake |
+| Forensic on **modern generators** (GPT Image 2, Nano Banana 2, FLUX.2, Qwen Image 2.1, MJ/DALL-E/SD/NB Pro) | balanced acc ≈ **0.50** for every model (chance) |
+| Watermark on 150 real **full-size** photos (16 bits, strength 0.75) | PSNR 43.2 dB, SSIM 0.998; detected 100 % clean, 99.3 % after JPEG 50, 100 % after resize; 0 false positives; cropping breaks it |
+
+Tables: `code/outputs/tables/` (classification.csv, ood*.csv, clustering.csv, watermark*.csv, hybrid.csv).
 
 ---
 

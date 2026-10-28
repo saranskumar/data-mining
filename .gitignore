@@ -44,3 +44,6 @@ dataset/*
 
 # Derived OOD arrays (rebuild with code/data_ood/build_modern.py)
 code/data_ood/out/
+
+# Demo watermark message registry (local)
+code/outputs/wm_registry.json

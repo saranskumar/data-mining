@@ -50,7 +50,7 @@ def fusion_verdict(p_fake: float, mark_detected: bool) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="HybridMarker — Hybrid Evaluation")
     parser.add_argument("--config", default="configs/config.yaml")
-    parser.add_argument("--subset", type=int, default=300)
+    parser.add_argument("--subset", type=int, default=1000)
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -95,7 +95,7 @@ def main() -> None:
     fpr_target = det_cfg.get("false_positive_rate_target", 1e-3)
     threshold = binomial_threshold(L, fpr_target)
 
-    enc = EncoderCNN(message_bits=L, strength_alpha=alpha).to(device)
+    enc = EncoderCNN(message_bits=L, strength_alpha=alpha, lum_only=wm_info.get("lum_only", False)).to(device)
     dec = DecoderCNN(message_bits=L).to(device)
     enc.load_state_dict(torch.load(out_models / "wm_enc.pt", map_location=device))
     dec.load_state_dict(torch.load(out_models / "wm_dec.pt", map_location=device))

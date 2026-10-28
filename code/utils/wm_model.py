@@ -3,7 +3,7 @@ utils/wm_model.py — PyTorch Encoder / Decoder / NoiseLayer for watermarking.
 
 Architecture (sized for RTX 2050 4 GB, 32×32 images):
   Encoder: ConvBlock stack on cover + spatially-tiled message → residual δ
-           output x_w = clip(x + alpha * δ, 0, 1)
+           output x_w = clip(x + alpha * tanh(δ), 0, 1)  (bounded per-pixel change)
   Decoder: small CNN → L logits
   NoiseLayer: differentiable approximations sampled per batch
 """
@@ -22,7 +22,8 @@ class ConvBnRelu(nn.Module):
     def __init__(self, in_ch: int, out_ch: int, k: int = 3, stride: int = 1) -> None:
         super().__init__()
         self.net = nn.Sequential(
-            nn.Conv2d(in_ch, out_ch, k, stride=stride, padding=k // 2, bias=False),
+            nn.Conv2d(in_ch, out_ch, k, stride=stride, padding=k // 2, bias=False,
+                      padding_mode="reflect"),  # no zero-padding edge artefacts
             nn.BatchNorm2d(out_ch),
             nn.LeakyReLU(0.2, inplace=True),
         )
@@ -39,28 +40,43 @@ class EncoderCNN(nn.Module):
     message is spatially tiled to (B, L, H, W) and concatenated with cover.
     """
 
-    def __init__(self, message_bits: int = 48, strength_alpha: float = 1.0) -> None:
+    def __init__(self, message_bits: int = 48, strength_alpha: float = 1.0,
+                 lum_only: bool = False) -> None:
         super().__init__()
         self.L = message_bits
         self.alpha = strength_alpha
-        in_ch = 3 + message_bits  # cover channels + tiled message
+        self.lum_only = lum_only
+        # Learned spatial embedding of the message (each bit gets its own 32x32 pattern).
+        # Tiling bits as constant maps gives a conv net no positional information, so with
+        # reflect padding + zero-mean residual it could only produce a uniform (removed) shift.
+        self.msg_ch, self.size = 4, 32
+        self.msg_proj = nn.Linear(message_bits, self.msg_ch * self.size * self.size)
+        in_ch = 3 + self.msg_ch
 
         self.encoder = nn.Sequential(
             ConvBnRelu(in_ch, 64),
             ConvBnRelu(64, 64),
             ConvBnRelu(64, 64),
             ConvBnRelu(64, 32),
-            nn.Conv2d(32, 3, 1, bias=False),  # residual δ
+            nn.Conv2d(32, 1 if lum_only else 3, 1, bias=False),  # residual δ
         )
 
     def forward(self, cover: torch.Tensor, message: torch.Tensor) -> torch.Tensor:
         B, _, H, W = cover.shape
         # Tile message spatially: (B, L) → (B, L, H, W)
         msg_pm = message * 2.0 - 1.0  # {0,1} -> {-1,+1}, zero-mean input
-        msg_tiled = msg_pm.unsqueeze(-1).unsqueeze(-1).expand(B, self.L, H, W)
-        x = torch.cat([cover, msg_tiled], dim=1)
-        delta = self.encoder(x)
-        return torch.clamp(cover + self.alpha * delta, 0.0, 1.0)
+        msg_map = self.msg_proj(msg_pm).view(B, self.msg_ch, self.size, self.size)
+        if (H, W) != (self.size, self.size):
+            msg_map = F.interpolate(msg_map, size=(H, W), mode="bilinear", align_corners=False)
+        x = torch.cat([cover, msg_map], dim=1)
+        # tanh bounds each pixel change to ±alpha, so image quality is set by alpha
+        # (PSNR >= 20*log10(1/alpha)) instead of by balancing loss weights.
+        delta = torch.tanh(self.encoder(x))
+        # Zero-mean per channel: the message cannot hide in a global colour cast / tint (which
+        # survives down-scaling and is very visible on full-size photos); it must be a spatial
+        # pattern. lum_only additionally forces a grey (brightness-only) pattern.
+        delta = delta - delta.mean(dim=(2, 3), keepdim=True)
+        return torch.clamp(cover + self.alpha * delta.expand(-1, 3, -1, -1), 0.0, 1.0)
 
 
 # ─── Decoder ──────────────────────────────────────────────────────────────────
@@ -97,9 +113,17 @@ class DecoderCNN(nn.Module):
 class DifferentiableJPEG(nn.Module):
     """Very rough JPEG simulation: quantise → dequantise + Gaussian blur."""
 
+    def __init__(self, levels: int = 64) -> None:
+        super().__init__()
+        self.levels = levels
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Crude: round to 1/16 steps (simulates coarse quantisation)
-        quantised = torch.round(x * 16) / 16
+        # Quantise with a straight-through estimator: forward = rounded, backward = identity
+        # (plain torch.round has zero gradient, so the encoder would learn nothing from it).
+        # Step 1/levels must stay comparable to the watermark budget alpha, otherwise only
+        # a global colour shift survives and the encoder learns a visible tint.
+        q = torch.round(x * self.levels) / self.levels
+        quantised = x + (q - x).detach()
         # Slight smoothing
         k = torch.ones(1, 1, 3, 3, device=x.device) / 9.0
         k = k.expand(x.shape[1], 1, 3, 3)
@@ -113,8 +137,10 @@ class NoiseLayer(nn.Module):
     Probabilities set in config.
     """
 
-    def __init__(self, probs: Optional[dict] = None) -> None:
+    def __init__(self, probs: Optional[dict] = None, noise_sigma: float = 0.01,
+                 jpeg_levels: int = 64) -> None:
         super().__init__()
+        self.noise_sigma = noise_sigma  # keep below the watermark budget alpha
         default_probs = {
             "identity": 0.3,
             "gaussian": 0.15,
@@ -124,10 +150,10 @@ class NoiseLayer(nn.Module):
             "jpeg_approx": 0.125,
         }
         self.probs = probs or default_probs
-        self._jpeg = DifferentiableJPEG()
+        self._jpeg = DifferentiableJPEG(jpeg_levels)
 
     def _gaussian_noise(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.clamp(x + 0.05 * torch.randn_like(x), 0, 1)
+        return torch.clamp(x + self.noise_sigma * torch.randn_like(x), 0, 1)
 
     def _blur(self, x: torch.Tensor) -> torch.Tensor:
         k = torch.ones(1, 1, 3, 3, device=x.device) / 9.0
@@ -174,9 +200,9 @@ class NoiseLayer(nn.Module):
 
 class HybridMarkerWM(nn.Module):
     def __init__(self, message_bits: int = 48, alpha: float = 1.0,
-                 noise_probs: Optional[dict] = None) -> None:
+                 noise_probs: Optional[dict] = None, lum_only: bool = False) -> None:
         super().__init__()
-        self.encoder = EncoderCNN(message_bits, alpha)
+        self.encoder = EncoderCNN(message_bits, alpha, lum_only)
         self.decoder = DecoderCNN(message_bits)
         self.noise = NoiseLayer(noise_probs)
 

@@ -73,11 +73,12 @@ def main() -> None:
         summary.append(dict(model=name, ood_balanced_acc=(tnr + tpr) / 2, detection_rate_tpr=tpr,
                             false_positive_rate=1 - tnr, cifake_test_acc=ref.get(name),
                             drop=(ref.get(name) - (tnr + tpr) / 2) if name in ref else None))
-        for (src, gen), idx in meta.groupby(["source", "generator"]).groups.items():
+        # group by label too: a source can hold real and fake rows under one generator name
+        for (src, gen, lab), idx in meta.groupby(["source", "generator", "label"]).groups.items():
             m = np.zeros(len(y), bool)
             m[list(idx)] = True
-            is_fake = bool(y[m][0])
-            by_gen.append(dict(model=name, source=src, generator=gen, n=int(m.sum()),
+            is_fake = bool(lab)
+            by_gen.append(dict(model=name, source=src, generator=gen if is_fake else f"{gen} (real)", n=int(m.sum()),
                                rate=float((pred[m] == (1 if is_fake else 0)).mean()),
                                metric="detection_rate" if is_fake else "specificity"))
         log.info("%-10s bal-acc=%.3f TPR=%.3f FPR=%.3f", name, (tnr + tpr) / 2, tpr, 1 - tnr)
